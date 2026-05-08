@@ -5,10 +5,6 @@ import com.intellij.ui.scale.JBUIScale
 import javax.swing.Icon
 
 object PolishFlagIconProvider {
-    val SMILE_EMOJI: Icon = try {
-        IconLoader.getIcon("/icons/smile.png", PolishFlagIconProvider::class.java)
-    } catch (e: Exception) {
-        // Fallback to programmatically created icon
-        SmileEmojiIcon(JBUIScale.scale(16))
-    }
+    val SMILE_EMOJI = runCatching { IconLoader.getIcon("/icons/smile.png", javaClass) }
+        .getOrElse { SmileEmojiIcon(JBUIScale.scale(16)) }
 }

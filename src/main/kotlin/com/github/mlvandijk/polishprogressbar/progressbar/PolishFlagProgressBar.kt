@@ -12,152 +12,104 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.plaf.ComponentUI
 import javax.swing.plaf.basic.BasicProgressBarUI
+import kotlin.math.roundToInt
 
-/**
- * Polish flag progress bar with a neutral smile emoji.
- * The progress bar shows the Polish flag colors (white and red) and a neutral smile emoji.
- */
 class PolishFlagProgressBar : BasicProgressBarUI() {
 
     companion object {
-        // Polish flag colors
         private val WHITE = JBColor(Gray._255, Gray._255)
         private val RED = JBColor(Color(220, 20, 60), Color(220, 20, 60))
 
-        // Dimensions
-        private const val ANIMATION_DELAY = 10 // Reduced for smoother animation
-        private const val ANIMATION_SPEED = 0.2f // 5 times slower (1/5 = 0.2)
-        private const val CYCLE_TIME_MS = 5000 // 5 times longer cycle
+        private const val BAR_HEIGHT = 20
+        private const val CORNER_RADIUS = 8f
+        private const val ICON_PADDING = 2
+        private const val ICON_SPEED = 0.2f
     }
 
     class UICreator {
         companion object {
             @JvmStatic
-            fun createUI(c: JComponent): ComponentUI {
-                return PolishFlagProgressBar()
-            }
+            fun createUI(c: JComponent): ComponentUI = PolishFlagProgressBar()
         }
     }
 
-    private var position = 0f // Using float for smoother animation
-    private var velocity = 1f
+    private var iconPosition = 0f
+    private var iconDirection = 1f
     private var lastTimeMillis = 0L
 
-    override fun getBoxLength(availableLength: Int, otherDimension: Int): Int {
-        return availableLength / 2
-    }
+    override fun getBoxLength(availableLength: Int, otherDimension: Int): Int = availableLength / 2
 
     override fun paintIndeterminate(g: Graphics, c: JComponent) {
-        if (!(g is Graphics2D)) {
-            return
-        }
-
-        val g2d = g as Graphics2D
-
-        // Setup
-        val config = GraphicsConfig(g2d)
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-
-        // Calculate dimensions
+        val g2 = g as? Graphics2D ?: return
         val barWidth = progressBar.width
         val barHeight = progressBar.preferredSize.height
 
-        // Draw background
-        g2d.color = UIUtil.getPanelBackground()
-        val rect = RoundRectangle2D.Float(0f, 0f, barWidth.toFloat(), barHeight.toFloat(), 
-                                          JBUIScale.scale(8f), JBUIScale.scale(8f))
-        g2d.fill(rect)
+        if (barWidth <= 0 || barHeight <= 0) return
 
-        // Calculate animation position
-        updatePosition()
+        val config = GraphicsConfig(g2)
+        val progressRect = roundRect(0f, 0f, barWidth.toFloat(), barHeight.toFloat())
+        val iconSize = barHeight - JBUIScale.scale(ICON_PADDING)
+        val maxIconX = (barWidth - iconSize).coerceAtLeast(0)
 
-        // Create a rounded rectangle for the progress bar area
-        val progressRect = RoundRectangle2D.Float(
-            0f, 0f, 
-            barWidth.toFloat(), barHeight.toFloat(), 
-            JBUIScale.scale(8f), JBUIScale.scale(8f)
-        )
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2.color = UIUtil.getPanelBackground()
+            g2.fill(progressRect)
 
-        // Save the original clip
-        val originalClip = g2d.clip
+            g2.withClip(progressRect) {
+                paintFlag(g2, barWidth, barHeight)
+            }
 
-        // Set clip to the progress rectangle
-        g2d.clip = progressRect
+            updateIconPosition(maxIconX.toFloat())
+            paintIcon(
+                g = g2,
+                icon = PolishFlagIconProvider.SMILE_EMOJI,
+                x = iconPosition.roundToInt().coerceIn(0, maxIconX),
+                y = (barHeight - iconSize) / 2,
+                maxSize = iconSize,
+            )
 
-        // Draw the white top half - spans the full width
-        g2d.color = WHITE
-        g2d.fillRect(0, 0, barWidth, barHeight / 2)
+            g2.color = JBColor.GRAY
+            g2.draw(progressRect)
+        } finally {
+            config.restore()
+        }
 
-        // Draw the red bottom half - spans the full width
-        g2d.color = RED
-        g2d.fillRect(0, barHeight / 2, barWidth, barHeight / 2)
-
-        // Restore original clip
-        g2d.clip = originalClip
-
-        // Draw smile emoji
-        val emojiSize = barHeight - JBUIScale.scale(2)
-        val emojiX = position.toInt() % barWidth
-        val emojiY = (barHeight - emojiSize) / 2
-
-        val icon = PolishFlagIconProvider.SMILE_EMOJI
-        paintIcon(g2d, icon, emojiX, emojiY, emojiSize)
-
-        // Draw a border around the progress bar
-        g2d.color = JBColor.GRAY
-        g2d.draw(progressRect)
-
-        config.restore()
-
-        // Trigger repaint for animation
         if (progressBar.isDisplayable) {
             progressBar.repaint()
         }
     }
 
-    private fun updatePosition() {
+    private fun updateIconPosition(maxPosition: Float) {
         val currentTimeMillis = System.currentTimeMillis()
-
-        if (lastTimeMillis == 0L) {
-            lastTimeMillis = currentTimeMillis
-            return
-        }
-
-        // Calculate exact time delta for continuous animation
-        val timeDelta = currentTimeMillis - lastTimeMillis
+        val elapsedSeconds = if (lastTimeMillis == 0L) 0f else (currentTimeMillis - lastTimeMillis) / 1_000f
         lastTimeMillis = currentTimeMillis
 
-        // Always update position for every frame, making animation continuous
-        // Apply ANIMATION_SPEED to slow down by factor of 5
-        val movement = velocity * timeDelta * ANIMATION_SPEED / 1000.0f
-        position += movement // Use float for smooth movement
-
-        // Ensure position stays within bounds and create a smooth loop
-        if (position < 0f) {
-            position = 0f
-            velocity = 1f
-        } else if (position > progressBar.width.toFloat()) {
-            position = progressBar.width.toFloat()
-            velocity = -1f
-        }
-    }
-
-    override fun getPreferredSize(c: JComponent): Dimension {
-        return Dimension(super.getPreferredSize(c).width, JBUIScale.scale(20))
-    }
-
-    override fun paintDeterminate(g: Graphics, c: JComponent) {
-        if (!(g is Graphics2D)) {
+        if (maxPosition <= 0f) {
+            iconPosition = 0f
+            iconDirection = 1f
             return
         }
+
+        iconPosition += iconDirection * ICON_SPEED * elapsedSeconds
+        if (iconPosition !in 0f..maxPosition) {
+            iconPosition = iconPosition.coerceIn(0f, maxPosition)
+            iconDirection *= -1f
+        }
+    }
+
+    override fun getPreferredSize(c: JComponent): Dimension =
+        Dimension(super.getPreferredSize(c).width, JBUIScale.scale(BAR_HEIGHT))
+
+    override fun paintDeterminate(g: Graphics, c: JComponent) {
+        val g2 = g as? Graphics2D ?: return
 
         if (progressBar.orientation != SwingConstants.HORIZONTAL || !c.componentOrientation.isLeftToRight) {
             super.paintDeterminate(g, c)
             return
         }
 
-        val config = GraphicsConfig(g)
-        val b = progressBar.insets // area for border
+        val b = progressBar.insets
         val w = progressBar.width
         val h = progressBar.preferredSize.height
 
@@ -169,68 +121,64 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
         }
 
         val amountFull = getAmountFull(b, barRectWidth, barRectHeight)
+        val background = c.parent?.background ?: UIUtil.getPanelBackground()
+        val config = GraphicsConfig(g2)
+        val transform = g2.transform
 
-        val parent = c.parent
-        val background = parent?.background ?: UIUtil.getPanelBackground()
+        try {
+            g2.color = background
+            if (c.isOpaque) {
+                g2.fillRect(0, 0, w, h)
+            }
 
-        g.color = background
-        val g2 = g as Graphics2D
-        if (c.isOpaque) {
-            g.fillRect(0, 0, w, h)
+            g2.translate(0, (c.height - h) / 2)
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+            val border = JBUIScale.scale(1f)
+            g2.color = progressBar.foreground
+            g2.fill(roundRect(0f, 0f, w - border, h - border, JBUIScale.scale(9f)))
+            g2.color = background
+            g2.fill(roundRect(border, border, w - 3f * border, h - 3f * border))
+
+            if (amountFull > 0) {
+                val progressRect = roundRect(
+                    2f * border,
+                    2f * border,
+                    amountFull - JBUIScale.scale(5f),
+                    h - JBUIScale.scale(5f),
+                    JBUIScale.scale(7f),
+                )
+                g2.withClip(progressRect) {
+                    paintFlag(g2, w, h)
+                }
+
+                val iconSize = h - JBUIScale.scale(ICON_PADDING)
+                paintIcon(
+                    g = g2,
+                    icon = PolishFlagIconProvider.SMILE_EMOJI,
+                    x = (amountFull - iconSize).coerceIn(0, (w - iconSize).coerceAtLeast(0)),
+                    y = (h - iconSize) / 2,
+                    maxSize = iconSize,
+                )
+            }
+        } finally {
+            g2.transform = transform
+            config.restore()
         }
 
-        val R = JBUIScale.scale(8f)
-        val R2 = JBUIScale.scale(9f)
-        val off = JBUIScale.scale(1f)
-
-        g2.translate(0, (c.height - h) / 2)
-        g2.color = progressBar.foreground
-        g2.fill(RoundRectangle2D.Float(0f, 0f, w - off, h - off, R2, R2))
-        g2.color = background
-        g2.fill(RoundRectangle2D.Float(off, off, w - 2f * off - off, h - 2f * off - off, R, R))
-
-        // Use Polish flag colors instead of rainbow
-        if (amountFull > 0) {
-            // Create a rounded rectangle for the progress area
-            val progressRect = RoundRectangle2D.Float(
-                2f * off, 2f * off, 
-                amountFull - JBUIScale.scale(5f), h - JBUIScale.scale(5f), 
-                JBUIScale.scale(7f), JBUIScale.scale(7f)
-            )
-
-            // Save the original clip
-            val originalClip = g2.clip
-
-            // Set clip to the progress rectangle
-            g2.clip = progressRect
-
-            // Draw the white top half - spans the full width
-            g2.color = WHITE
-            g2.fillRect(0, 0, w, h / 2)
-
-            // Draw the red bottom half - spans the full width
-            g2.color = RED
-            g2.fillRect(0, h / 2, w, h / 2)
-
-            // Restore original clip
-            g2.clip = originalClip
-
-            // Draw the smile emoji at the end of the progress
-            val icon = PolishFlagIconProvider.SMILE_EMOJI
-            val emojiSize = h - JBUIScale.scale(2)
-            val emojiX = (amountFull - emojiSize).coerceAtLeast(0)
-            val emojiY = (h - emojiSize) / 2
-            paintIcon(g2, icon, emojiX, emojiY, emojiSize)
-        }
-
-        g2.translate(0, -(c.height - h) / 2)
-
-        // Deal with possible text painting
         if (progressBar.isStringPainted) {
             paintString(g, b.left, b.top, barRectWidth, barRectHeight, amountFull, b)
         }
+    }
 
-        config.restore()
+    private fun paintFlag(g: Graphics2D, width: Int, height: Int) {
+        val halfHeight = height / 2
+
+        g.color = WHITE
+        g.fillRect(0, 0, width, halfHeight)
+
+        g.color = RED
+        g.fillRect(0, halfHeight, width, height - halfHeight)
     }
 
     private fun paintIcon(g: Graphics2D, icon: Icon, x: Int, y: Int, maxSize: Int) {
@@ -239,16 +187,35 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
         }
 
         val scale = minOf(1.0, maxSize.toDouble() / icon.iconWidth, maxSize.toDouble() / icon.iconHeight)
-        val width = (icon.iconWidth * scale).toInt()
-        val height = (icon.iconHeight * scale).toInt()
-        val transform = g.transform
+        val width = (icon.iconWidth * scale).roundToInt()
+        val height = (icon.iconHeight * scale).roundToInt()
+        val iconGraphics = g.create() as Graphics2D
 
         try {
-            g.translate(x + (maxSize - width) / 2, y + (maxSize - height) / 2)
-            g.scale(scale, scale)
-            icon.paintIcon(progressBar, g, 0, 0)
+            iconGraphics.translate(x + (maxSize - width) / 2, y + (maxSize - height) / 2)
+            iconGraphics.scale(scale, scale)
+            icon.paintIcon(progressBar, iconGraphics, 0, 0)
         } finally {
-            g.transform = transform
+            iconGraphics.dispose()
         }
     }
+
+    private inline fun Graphics2D.withClip(clip: Shape, paint: () -> Unit) {
+        val originalClip = this.clip
+        try {
+            this.clip = clip
+            paint()
+        } finally {
+            this.clip = originalClip
+        }
+    }
+
+    private fun roundRect(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        radius: Float = JBUIScale.scale(CORNER_RADIUS),
+    ) =
+        RoundRectangle2D.Float(x, y, width.coerceAtLeast(0f), height.coerceAtLeast(0f), radius, radius)
 }
