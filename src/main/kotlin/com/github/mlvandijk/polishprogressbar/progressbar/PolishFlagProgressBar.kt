@@ -4,15 +4,13 @@ import com.intellij.openapi.ui.GraphicsConfig
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.geom.AffineTransform
 import java.awt.geom.RoundRectangle2D
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import javax.swing.plaf.ComponentUI
-import javax.swing.plaf.basic.BasicGraphicsUtils
 import javax.swing.plaf.basic.BasicProgressBarUI
 
 /**
@@ -102,8 +100,8 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
         val emojiX = position.toInt() % barWidth
         val emojiY = (barHeight - emojiSize) / 2
 
-        val icon = IconUtil.toSize(PolishFlagIconProvider.SMILE_EMOJI, emojiSize, emojiSize)
-        icon.paintIcon(progressBar, g2d, emojiX, emojiY)
+        val icon = PolishFlagIconProvider.SMILE_EMOJI
+        paintIcon(g2d, icon, emojiX, emojiY, emojiSize)
 
         // Draw a border around the progress bar
         g2d.color = JBColor.GRAY
@@ -218,10 +216,11 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
             g2.clip = originalClip
 
             // Draw the smile emoji at the end of the progress
-            val emojiSize = h - JBUIScale.scale(4)
-            val icon = IconUtil.toSize(PolishFlagIconProvider.SMILE_EMOJI, emojiSize, emojiSize)
+            val icon = PolishFlagIconProvider.SMILE_EMOJI
+            val emojiSize = h - JBUIScale.scale(2)
+            val emojiX = (amountFull - emojiSize).coerceAtLeast(0)
             val emojiY = (h - emojiSize) / 2
-            icon.paintIcon(progressBar, g2, amountFull - JBUIScale.scale(10), emojiY)
+            paintIcon(g2, icon, emojiX, emojiY, emojiSize)
         }
 
         g2.translate(0, -(c.height - h) / 2)
@@ -234,34 +233,22 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
         config.restore()
     }
 
-    private fun paintString(g: Graphics, x: Int, y: Int, w: Int, h: Int, fillStart: Int, amountFull: Int) {
-        if (!(g is Graphics2D)) {
+    private fun paintIcon(g: Graphics2D, icon: Icon, x: Int, y: Int, maxSize: Int) {
+        if (maxSize <= 0 || icon.iconWidth <= 0 || icon.iconHeight <= 0) {
             return
         }
 
-        val g2 = g as Graphics2D
-        val progressString = progressBar.string
-        g2.font = progressBar.font
-        val renderLocation = getStringPlacement(g2, progressString, x, y, w, h)
-        val oldClip = g2.clipBounds
+        val scale = minOf(1.0, maxSize.toDouble() / icon.iconWidth, maxSize.toDouble() / icon.iconHeight)
+        val width = (icon.iconWidth * scale).toInt()
+        val height = (icon.iconHeight * scale).toInt()
+        val transform = g.transform
 
-        if (progressBar.orientation == SwingConstants.HORIZONTAL) {
-            g2.color = selectionBackground
-            BasicGraphicsUtils.drawString(progressBar, g2, progressString, renderLocation.x.toFloat(), renderLocation.y.toFloat())
-            g2.color = selectionForeground
-            g2.clipRect(fillStart, y, amountFull, h)
-            BasicGraphicsUtils.drawString(progressBar, g2, progressString, renderLocation.x.toFloat(), renderLocation.y.toFloat())
-        } else { // VERTICAL
-            g2.color = selectionBackground
-            val rotate = AffineTransform.getRotateInstance(Math.PI / 2)
-            g2.font = progressBar.font.deriveFont(rotate)
-            val verticalRenderLocation = getStringPlacement(g2, progressString, x, y, w, h)
-            BasicGraphicsUtils.drawString(progressBar, g2, progressString, verticalRenderLocation.x.toFloat(), verticalRenderLocation.y.toFloat())
-            g2.color = selectionForeground
-            g2.clipRect(x, fillStart, w, amountFull)
-            BasicGraphicsUtils.drawString(progressBar, g2, progressString, verticalRenderLocation.x.toFloat(), verticalRenderLocation.y.toFloat())
+        try {
+            g.translate(x + (maxSize - width) / 2, y + (maxSize - height) / 2)
+            g.scale(scale, scale)
+            icon.paintIcon(progressBar, g, 0, 0)
+        } finally {
+            g.transform = transform
         }
-
-        g2.clip = oldClip
     }
 }
