@@ -10,11 +10,5 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="com.github.mlvandijk.polishprogressbar.startup.MyProjectActivity" />
-        <applicationService serviceImplementation="com.github.mlvandijk.polishprogressbar.progressbar.PolishFlagProgressIndicatorProvider"/>
     </extensions>
-
-    <applicationListeners>
-        <listener class="com.github.mlvandijk.polishprogressbar.progressbar.PolishFlagProgressIndicatorProvider"
-                  topic="com.intellij.ide.ui.LafManagerListener"/>
-    </applicationListeners>
 </idea-plugin>

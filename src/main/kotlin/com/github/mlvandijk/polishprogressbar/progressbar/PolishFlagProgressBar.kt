@@ -1,8 +1,10 @@
 package com.github.mlvandijk.polishprogressbar.progressbar
 
 import com.intellij.openapi.ui.GraphicsConfig
+import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.geom.AffineTransform
@@ -21,7 +23,7 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
 
     companion object {
         // Polish flag colors
-        private val WHITE = JBColor(Color(255, 255, 255), Color(255, 255, 255))
+        private val WHITE = JBColor(Gray._255, Gray._255)
         private val RED = JBColor(Color(220, 20, 60), Color(220, 20, 60))
 
         // Dimensions
@@ -100,7 +102,7 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
         val emojiX = position.toInt() % barWidth
         val emojiY = (barHeight - emojiSize) / 2
 
-        val icon = PolishFlagIconProvider.SMILE_EMOJI
+        val icon = IconUtil.toSize(PolishFlagIconProvider.SMILE_EMOJI, emojiSize, emojiSize)
         icon.paintIcon(progressBar, g2d, emojiX, emojiY)
 
         // Draw a border around the progress bar
@@ -216,8 +218,8 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
             g2.clip = originalClip
 
             // Draw the smile emoji at the end of the progress
-            val icon = PolishFlagIconProvider.SMILE_EMOJI
-            val emojiSize = icon.iconHeight
+            val emojiSize = h - JBUIScale.scale(4)
+            val icon = IconUtil.toSize(PolishFlagIconProvider.SMILE_EMOJI, emojiSize, emojiSize)
             val emojiY = (h - emojiSize) / 2
             icon.paintIcon(progressBar, g2, amountFull - JBUIScale.scale(10), emojiY)
         }
