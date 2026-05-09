@@ -3,6 +3,7 @@
     <id>com.github.mlvandijk.polishprogressbar</id>
     <name>Polish Flag Progress Bar</name>
     <vendor>mlvandijk</vendor>
+    <description>Polish Progress Bar displays a Polish flag and Polish smile in the progress bar.</description>
 
     <depends>com.intellij.modules.platform</depends>
 
