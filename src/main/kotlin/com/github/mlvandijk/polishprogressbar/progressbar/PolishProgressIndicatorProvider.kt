@@ -1,16 +1,15 @@
 package com.github.mlvandijk.polishprogressbar.progressbar
 
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import javax.swing.UIManager
 
 /**
- * Provider for the Polish flag progress bar.
+ * Provider for the Polish progress bar.
  * Registers the custom progress bar UI with the UIManager.
  */
 @Service
-class PolishFlagProgressIndicatorProvider : LafManagerListener {
+class PolishProgressIndicatorProvider : LafManagerListener {
 
     init {
         updateProgressBarUi()
@@ -21,7 +20,7 @@ class PolishFlagProgressIndicatorProvider : LafManagerListener {
     }
 
     private fun updateProgressBarUi() {
-        UIManager.put("ProgressBarUI", PolishFlagProgressBar.UICreator::class.java.name)
-        UIManager.getDefaults()[PolishFlagProgressBar.UICreator::class.java.name] = PolishFlagProgressBar.UICreator::class.java
+        UIManager.put("ProgressBarUI", PolishProgressBar.UICreator::class.java.name)
+        UIManager.getDefaults()[PolishProgressBar.UICreator::class.java.name] = PolishProgressBar.UICreator::class.java
     }
 }

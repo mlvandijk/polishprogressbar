@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.mlvandijk.polishprogressbar</id>
-    <name>Polish Flag Progress Bar</name>
+    <name>Polish Progress Bar</name>
     <vendor>mlvandijk</vendor>
     <description>Polish Progress Bar displays a Polish flag and Polish smile in the progress bar.</description>
 

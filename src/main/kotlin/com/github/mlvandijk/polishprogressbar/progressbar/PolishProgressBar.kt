@@ -14,7 +14,7 @@ import javax.swing.plaf.ComponentUI
 import javax.swing.plaf.basic.BasicProgressBarUI
 import kotlin.math.roundToInt
 
-class PolishFlagProgressBar : BasicProgressBarUI() {
+class PolishProgressBar : BasicProgressBarUI() {
 
     companion object {
         private val WHITE = JBColor(Gray._255, Gray._255)
@@ -29,7 +29,7 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
     class UICreator {
         companion object {
             @JvmStatic
-            fun createUI(c: JComponent): ComponentUI = PolishFlagProgressBar()
+            fun createUI(c: JComponent): ComponentUI = PolishProgressBar()
         }
     }
 
@@ -63,7 +63,7 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
             updateIconPosition(maxIconX.toFloat())
             paintIcon(
                 g = g2,
-                icon = PolishFlagIconProvider.SMILE_EMOJI,
+                icon = PolishSmileIconProvider.SMILE_EMOJI,
                 x = iconPosition.roundToInt().coerceIn(0, maxIconX),
                 y = (barHeight - iconSize) / 2,
                 maxSize = iconSize,
@@ -155,7 +155,7 @@ class PolishFlagProgressBar : BasicProgressBarUI() {
                 val iconSize = h - JBUIScale.scale(ICON_PADDING)
                 paintIcon(
                     g = g2,
-                    icon = PolishFlagIconProvider.SMILE_EMOJI,
+                    icon = PolishSmileIconProvider.SMILE_EMOJI,
                     x = (amountFull - iconSize).coerceIn(0, (w - iconSize).coerceAtLeast(0)),
                     y = (h - iconSize) / 2,
                     maxSize = iconSize,
