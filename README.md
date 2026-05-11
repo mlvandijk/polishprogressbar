@@ -1,9 +1,10 @@
 # Polish Progress Bar
 
 This progress bar was originally vibe coded as a joke.
-Find the original code [here](https://github.com/mlvandijk/progress-bar-pl).
-Find the related blogpost [here](https://maritvandijk.com/vibe-coding-an-intellij-idea-plugin/).
-Since that version no longer builds, this version was updated based on a new plugin template, with the help of [Jakub Chrzanowski](https://www.linkedin.com/in/chrzanowski/), who also did some code cleanup.
+* Find the original code [here](https://github.com/mlvandijk/progress-bar-pl).
+* Find the related blogpost [here](https://maritvandijk.com/vibe-coding-an-intellij-idea-plugin/).
+
+Since that version no longer builds, this version was updated based on a new plugin template from the [IntelliJ Platform Plugin Generator](https://plugins.jetbrains.com/generator), with the help of [Jakub Chrzanowski](https://www.linkedin.com/in/chrzanowski/), who also did some code cleanup.
 
 # Features
 * Custom progress bar with Polish flag colors (white and red)
